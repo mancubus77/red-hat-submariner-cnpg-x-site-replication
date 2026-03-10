@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Base resources (namespace, operator, credentials)
+  - ../base
+  
+  # Cluster2 specific resources
+  - replica-cluster.yaml
+  - service-export.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: cnpg
+      app.kubernetes.io/part-of: cnpg-cross-site
+      app.kubernetes.io/component: replica
+      cluster: cluster2
+    includeSelectors: false
+
+

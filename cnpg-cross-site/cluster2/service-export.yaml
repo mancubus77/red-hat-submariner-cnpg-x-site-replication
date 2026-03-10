@@ -1,0 +1,17 @@
+---
+# ServiceExport for the replica PostgreSQL read-write service
+# This allows promoting the replica and accessing it from other clusters
+apiVersion: multicluster.x-k8s.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: cnpg-replica-rw
+  namespace: cnpg-database
+---
+# Export the read-only service
+apiVersion: multicluster.x-k8s.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: cnpg-replica-r
+  namespace: cnpg-database
+
+

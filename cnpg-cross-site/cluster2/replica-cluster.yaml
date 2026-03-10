@@ -1,0 +1,83 @@
+---
+# Replica PostgreSQL Cluster on Cluster2
+# This cluster replicates from the primary on Cluster1 via Submariner
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cnpg-replica
+  namespace: cnpg-database
+spec:
+  description: "Replica PostgreSQL cluster - replicates from primary via Submariner"
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  
+  # Replica cluster with 2 instances
+  instances: 2
+  
+  # This is a replica cluster (designated primary)
+  replica:
+    enabled: true
+    source: cnpg-primary-source
+  
+  # Bootstrap using pg_basebackup from the primary cluster
+  bootstrap:
+    pg_basebackup:
+      source: cnpg-primary-source
+      database: appdb
+      owner: app
+  
+  # Replication slots for HA within this cluster
+  replicationSlots:
+    highAvailability:
+      enabled: true
+      slotPrefix: _cnpg_
+    synchronizeReplicas:
+      enabled: true
+  
+  # PostgreSQL configuration
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: "256MB"
+  
+  # Superuser credentials (same as primary for replication)
+  superuserSecret:
+    name: cnpg-cluster-superuser
+  
+  # Storage configuration
+  storage:
+    size: 10Gi
+    storageClass: gp3-csi
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2"
+  
+  # Monitoring
+  monitoring:
+    enablePodMonitor: false
+  
+  # Affinity rules for HA
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+  
+  # External cluster definition for cross-cluster replication
+  # Connects to primary via Submariner using clusterset.local DNS
+  externalClusters:
+    - name: cnpg-primary-source
+      connectionParameters:
+        # Use Submariner's clusterset.local DNS to reach the primary
+        # This ensures traffic goes through the Submariner tunnel
+        host: cnpg-primary-rw.cnpg-database.svc.clusterset.local
+        port: "5432"
+        user: postgres
+        sslmode: prefer
+      password:
+        name: cnpg-cluster-superuser
+        key: password
+

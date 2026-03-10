@@ -1,0 +1,18 @@
+---
+# ServiceExport for the primary PostgreSQL read-write service
+# This makes the primary database accessible across clusters via Submariner
+# The service will be accessible at: cnpg-primary-rw.cnpg-database.svc.clusterset.local
+apiVersion: multicluster.x-k8s.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: cnpg-primary-rw
+  namespace: cnpg-database
+---
+# Also export the read-only service for read replicas if needed
+apiVersion: multicluster.x-k8s.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: cnpg-primary-r
+  namespace: cnpg-database
+
+

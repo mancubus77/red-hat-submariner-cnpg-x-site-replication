@@ -1,0 +1,82 @@
+---
+# Primary PostgreSQL Cluster on Cluster1
+# This cluster will be the source for cross-cluster replication
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cnpg-primary
+  namespace: cnpg-database
+spec:
+  description: "Primary PostgreSQL cluster for cross-site replication"
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  
+  # Primary cluster with 2 instances
+  instances: 2
+  
+  # Enable superuser access for cross-cluster replication
+  enableSuperuserAccess: true
+  
+  # Primary update strategy
+  primaryUpdateStrategy: unsupervised
+  
+  # Enable replication slots for external replicas
+  replicationSlots:
+    highAvailability:
+      enabled: true
+      slotPrefix: _cnpg_
+    # Synchronize replication slots on replicas
+    synchronizeReplicas:
+      enabled: true
+  
+  # PostgreSQL configuration for cross-cluster replication
+  postgresql:
+    parameters:
+      # WAL settings for replication
+      wal_level: logical
+      max_wal_senders: "10"
+      max_replication_slots: "10"
+      # Connection settings
+      max_connections: "200"
+      shared_buffers: "256MB"
+    # pg_hba rules to allow replication from remote clusters
+    pg_hba:
+      - host replication all all md5
+      - host all all 0.0.0.0/0 md5
+  
+  # Bootstrap with a new database
+  bootstrap:
+    initdb:
+      database: appdb
+      owner: app
+      secret:
+        name: cnpg-cluster-app
+      postInitSQL:
+        - CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+  
+  # Superuser credentials
+  superuserSecret:
+    name: cnpg-cluster-superuser
+  
+  # Storage configuration
+  storage:
+    size: 10Gi
+    storageClass: gp3-csi
+  
+  # Resource limits
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "2"
+  
+  # Monitoring
+  monitoring:
+    enablePodMonitor: false
+  
+  # Affinity rules for HA
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+
