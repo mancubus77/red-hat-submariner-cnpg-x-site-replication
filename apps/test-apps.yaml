@@ -1,0 +1,43 @@
+# Submariner Test Applications
+# ============================
+#
+# This directory contains BusyBox-based test applications for verifying
+# Submariner connectivity between clusters.
+#
+# Architecture:
+# - Cluster 1: Runs the busybox-server (HTTP server on port 8080)
+# - Cluster 2: Runs the busybox-client (test client)
+#
+# Deployment:
+# -----------
+#
+# 1. Deploy server on Cluster 1:
+#    export KUBECONFIG=/path/to/cluster1/kubeconfig
+#    kubectl apply -k apps/cluster1/
+#
+# 2. Deploy client on Cluster 2:
+#    export KUBECONFIG=/path/to/cluster2/kubeconfig
+#    kubectl apply -k apps/cluster2/
+#
+# Testing Connectivity:
+# --------------------
+#
+# 1. Exec into the client pod on Cluster 2:
+#    kubectl exec -it -n submariner-test deploy/busybox-client -- sh
+#
+# 2. Test DNS resolution (should resolve via Submariner):
+#    nslookup busybox-server.submariner-test.svc.clusterset.local
+#
+# 3. Test HTTP connectivity to server on Cluster 1:
+#    wget -qO- http://busybox-server.submariner-test.svc.clusterset.local:8080
+#
+# 4. Check automated test results:
+#    kubectl get jobs -n submariner-test
+#    kubectl logs -n submariner-test job/<job-name>
+#
+# Cleanup:
+# --------
+#    kubectl delete -k apps/cluster1/  # on Cluster 1
+#    kubectl delete -k apps/cluster2/  # on Cluster 2
+
+

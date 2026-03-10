@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # Namespace for Submariner Broker
+  - namespace.yaml
+  
+  # ManagedClusterSet - groups clusters for Submariner
+  - clustergroup.yaml
+  
+  # Bind the ClusterSet to the broker namespace
+  - clusterset-binding.yaml
+  
+  # Submariner Broker with Globalnet enabled
+  - broker.yaml
+  
+  # Label ManagedClusters to join the ClusterSet
+  - managedcluster-labels-cluster1.yaml
+  - managedcluster-labels-cluster2.yaml
+  
+  # SubmarinerConfig for each cluster
+  - submariner-config-cluster1.yaml
+  - submariner-config-cluster2.yaml
+  
+  # ManagedClusterAddOn to install Submariner on each cluster
+  - addon-local-cluster.yaml
+  - addon-cluster2.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: submariner
+      app.kubernetes.io/part-of: acm-submariner
+    includeSelectors: false

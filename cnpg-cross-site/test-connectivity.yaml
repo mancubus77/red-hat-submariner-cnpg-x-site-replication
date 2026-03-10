@@ -1,0 +1,98 @@
+---
+# Test pod to verify Submariner connectivity and PostgreSQL replication
+# Deploy this on cluster2 to test connectivity to the primary on cluster1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cnpg-connectivity-test
+  namespace: cnpg-database
+  labels:
+    app: cnpg-test
+spec:
+  containers:
+    - name: postgres-client
+      image: postgres:16
+      command:
+        - sleep
+        - infinity
+      env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: cnpg-cluster-superuser
+              key: password
+  restartPolicy: Never
+---
+# ConfigMap with test script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cnpg-test-script
+  namespace: cnpg-database
+data:
+  test.sh: |
+    #!/bin/bash
+    set -e
+    
+    echo "=========================================="
+    echo "CNPG Cross-Cluster Connectivity Test"
+    echo "=========================================="
+    
+    # Test DNS resolution via Submariner
+    echo ""
+    echo "1. Testing DNS resolution via Submariner..."
+    PRIMARY_HOST="cnpg-primary-rw.cnpg-database.svc.clusterset.local"
+    
+    if nslookup $PRIMARY_HOST > /dev/null 2>&1; then
+        echo "   ✓ DNS resolution successful for $PRIMARY_HOST"
+        nslookup $PRIMARY_HOST
+    else
+        echo "   ✗ DNS resolution failed for $PRIMARY_HOST"
+        echo "   Make sure Submariner is properly configured and ServiceExport exists"
+        exit 1
+    fi
+    
+    # Test TCP connectivity
+    echo ""
+    echo "2. Testing TCP connectivity to primary..."
+    if nc -z -w5 $PRIMARY_HOST 5432; then
+        echo "   ✓ TCP connection to port 5432 successful"
+    else
+        echo "   ✗ TCP connection failed"
+        exit 1
+    fi
+    
+    # Test PostgreSQL connection
+    echo ""
+    echo "3. Testing PostgreSQL connection..."
+    if psql -h $PRIMARY_HOST -U postgres -d appdb -c "SELECT version();" > /dev/null 2>&1; then
+        echo "   ✓ PostgreSQL connection successful"
+        psql -h $PRIMARY_HOST -U postgres -d appdb -c "SELECT version();"
+    else
+        echo "   ✗ PostgreSQL connection failed"
+        exit 1
+    fi
+    
+    # Test write and read
+    echo ""
+    echo "4. Testing data write to primary..."
+    psql -h $PRIMARY_HOST -U postgres -d appdb -c "
+      CREATE TABLE IF NOT EXISTS cross_cluster_test (
+        id SERIAL PRIMARY KEY,
+        message TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      INSERT INTO cross_cluster_test (message) VALUES ('Test from cluster2 via Submariner');
+    "
+    echo "   ✓ Data written successfully"
+    
+    echo ""
+    echo "5. Reading data from primary..."
+    psql -h $PRIMARY_HOST -U postgres -d appdb -c "SELECT * FROM cross_cluster_test ORDER BY created_at DESC LIMIT 5;"
+    
+    echo ""
+    echo "=========================================="
+    echo "All tests passed! Submariner connectivity verified."
+    echo "=========================================="
+
+

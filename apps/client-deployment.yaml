@@ -1,0 +1,49 @@
+---
+# BusyBox Client Deployment - Deploy on Cluster 2
+# Used to test connectivity to the server running on Cluster 1
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-client
+  namespace: submariner-test
+  labels:
+    app: busybox-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: busybox-client
+  template:
+    metadata:
+      labels:
+        app: busybox-client
+    spec:
+      containers:
+        - name: busybox
+          image: busybox:1.36
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "=== Submariner Test Client ==="
+              echo "Hostname: $(hostname)"
+              echo "This pod can be used to test Submariner connectivity"
+              echo ""
+              echo "Test commands to run:"
+              echo "  # Test via clusterset DNS (Submariner)"
+              echo "  wget -qO- http://busybox-server.submariner-test.svc.clusterset.local:8080"
+              echo ""
+              echo "  # Test DNS resolution"
+              echo "  nslookup busybox-server.submariner-test.svc.clusterset.local"
+              echo ""
+              echo "Sleeping forever - exec into this pod to run tests..."
+              sleep infinity
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+
+

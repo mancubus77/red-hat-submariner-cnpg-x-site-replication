@@ -1,0 +1,49 @@
+---
+# CronJob for automated connectivity testing
+# Runs every 5 minutes to verify Submariner link is working
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: submariner-connectivity-test
+  namespace: submariner-test
+  labels:
+    app: connectivity-test
+spec:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: test
+              image: busybox:1.36
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  echo "=== Submariner Connectivity Test ==="
+                  echo "Time: $(date)"
+                  echo ""
+                  echo "Testing DNS resolution..."
+                  if nslookup busybox-server.submariner-test.svc.clusterset.local > /dev/null 2>&1; then
+                    echo "✓ DNS resolution successful"
+                  else
+                    echo "✗ DNS resolution failed"
+                    exit 1
+                  fi
+                  echo ""
+                  echo "Testing HTTP connectivity..."
+                  if wget -qO- --timeout=10 http://busybox-server.submariner-test.svc.clusterset.local:8080; then
+                    echo ""
+                    echo "✓ HTTP connectivity successful"
+                  else
+                    echo "✗ HTTP connectivity failed"
+                    exit 1
+                  fi
+                  echo ""
+                  echo "=== All tests passed ==="
+          restartPolicy: OnFailure
+
+

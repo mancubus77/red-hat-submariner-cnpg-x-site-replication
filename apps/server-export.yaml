@@ -1,0 +1,10 @@
+---
+# ServiceExport - Makes the busybox-server service discoverable across clusters
+# This enables Submariner to create a clusterset-local DNS entry
+apiVersion: multicluster.x-k8s.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: busybox-server
+  namespace: submariner-test
+
+

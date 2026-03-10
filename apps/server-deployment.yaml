@@ -1,0 +1,67 @@
+---
+# BusyBox Server Deployment - Deploy on Cluster 1
+# Runs a simple HTTP server that responds with hostname and cluster info
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busybox-server
+  namespace: submariner-test
+  labels:
+    app: busybox-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: busybox-server
+  template:
+    metadata:
+      labels:
+        app: busybox-server
+    spec:
+      containers:
+        - name: busybox
+          image: busybox:1.36
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Starting BusyBox HTTP server on port 8080..."
+              while true; do
+                { 
+                  echo -e "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\n"
+                  echo "=== Submariner Test Server ==="
+                  echo "Hostname: $(hostname)"
+                  echo "Date: $(date)"
+                  echo "Pod IP: $(hostname -i)"
+                  echo "Cluster: cluster1"
+                  echo "============================"
+                } | nc -l -p 8080 -q 1
+              done
+          ports:
+            - containerPort: 8080
+              name: http
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "50m"
+            limits:
+              memory: "64Mi"
+              cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: busybox-server
+  namespace: submariner-test
+  labels:
+    app: busybox-server
+spec:
+  selector:
+    app: busybox-server
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+  type: ClusterIP
+
+
