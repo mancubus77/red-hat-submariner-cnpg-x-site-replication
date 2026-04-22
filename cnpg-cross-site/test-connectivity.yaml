@@ -1,6 +1,6 @@
 ---
 # Test pod to verify Submariner connectivity and PostgreSQL replication
-# Deploy this on cluster2 to test connectivity to the primary on cluster1
+# Deploy this on cluster-two to test connectivity to the primary on cluster-one
 apiVersion: v1
 kind: Pod
 metadata:
@@ -82,7 +82,7 @@ data:
         message TEXT,
         created_at TIMESTAMP DEFAULT NOW()
       );
-      INSERT INTO cross_cluster_test (message) VALUES ('Test from cluster2 via Submariner');
+      INSERT INTO cross_cluster_test (message) VALUES ('Test from cluster-two via Submariner');
     "
     echo "   ✓ Data written successfully"
     

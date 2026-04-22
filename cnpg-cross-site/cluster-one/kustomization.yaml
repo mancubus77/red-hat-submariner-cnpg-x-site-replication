@@ -4,18 +4,19 @@ kind: Kustomization
 resources:
   # Base resources (namespace, operator, credentials)
   - ../base
-  
+
   # Cluster1 specific resources
   - streaming-replica-secret.yaml
   - primary-cluster.yaml
   - service-export.yaml
+  - demo-database.yaml
 
 labels:
   - pairs:
       app.kubernetes.io/name: cnpg
       app.kubernetes.io/part-of: cnpg-cross-site
       app.kubernetes.io/component: primary
-      cluster: cluster1
+      cluster: cluster-one
     includeSelectors: false
 
 

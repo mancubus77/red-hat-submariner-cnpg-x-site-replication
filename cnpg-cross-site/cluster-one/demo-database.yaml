@@ -1,0 +1,45 @@
+---
+# Job to create demo table and sample data in appdb
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: demo-setup
+  namespace: cnpg-database
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: setup
+          image: ghcr.io/cloudnative-pg/postgresql:16.4
+          env:
+            - name: PGHOST
+              value: cnpg-primary-rw.cnpg-database.svc
+            - name: PGPORT
+              value: "5432"
+            - name: PGUSER
+              value: app
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cnpg-cluster-app
+                  key: password
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              echo "=== Creating sample table ==="
+              psql -d appdb -c "CREATE TABLE IF NOT EXISTS items (id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, description TEXT, quantity INTEGER DEFAULT 0, price NUMERIC(10,2), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
+
+              echo "=== Inserting sample data ==="
+              psql -d appdb -c "INSERT INTO items (name, description, quantity, price) SELECT 'Sample Item 1', 'This is a sample item', 10, 19.99 WHERE NOT EXISTS (SELECT 1 FROM items WHERE name = 'Sample Item 1');"
+              psql -d appdb -c "INSERT INTO items (name, description, quantity, price) SELECT 'Sample Item 2', 'Another sample item', 25, 29.99 WHERE NOT EXISTS (SELECT 1 FROM items WHERE name = 'Sample Item 2');"
+              psql -d appdb -c "INSERT INTO items (name, description, quantity, price) SELECT 'Sample Item 3', 'Third sample item', 5, 49.99 WHERE NOT EXISTS (SELECT 1 FROM items WHERE name = 'Sample Item 3');"
+
+              echo "=== Verifying setup ==="
+              psql -d appdb -c "SELECT * FROM items;"
+
+              echo "=== Demo setup complete! ==="
+

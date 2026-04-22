@@ -13,18 +13,22 @@ resources:
   
   # Submariner Broker with Globalnet enabled
   - broker.yaml
+
+  # Fix missing secrets RBAC on the broker Role (operator reconciles its own Role,
+  # so this is a separate Role+RoleBinding that won't be overwritten)
+  - broker-secrets-rbac.yaml
   
   # Label ManagedClusters to join the ClusterSet
-  - managedcluster-labels-cluster1.yaml
-  - managedcluster-labels-cluster2.yaml
+  - managedcluster-labels-cluster-one.yaml
+  - managedcluster-labels-cluster-two.yaml
   
   # SubmarinerConfig for each cluster
-  - submariner-config-cluster1.yaml
-  - submariner-config-cluster2.yaml
+  - submariner-config-cluster-one.yaml
+  - submariner-config-cluster-two.yaml
   
   # ManagedClusterAddOn to install Submariner on each cluster
   - addon-local-cluster.yaml
-  - addon-cluster2.yaml
+  - addon-cluster-two.yaml
 
 labels:
   - pairs:

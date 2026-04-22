@@ -6,7 +6,7 @@ This setup deploys CloudNativePG (CNPG) with cross-cluster replication using Sub
 
 ```
 ┌─────────────────────────────────────┐      ┌─────────────────────────────────────┐
-│           Cluster1                   │      │           Cluster2                   │
+│           Cluster-One                   │      │           Cluster-Two                   │
 │         (local-cluster)              │      │                                      │
 │                                      │      │                                      │
 │  ┌─────────────────────────────────┐ │      │  ┌─────────────────────────────────┐ │
@@ -50,25 +50,25 @@ This setup deploys CloudNativePG (CNPG) with cross-cluster replication using Sub
 - `subscription.yaml` - Installs the CNPG operator from OperatorHub
 - `db-credentials-secret.yaml` - Database credentials for superuser and app user
 
-### Cluster1 (Primary Site)
+### Cluster-One (Primary Site)
 - `primary-cluster.yaml` - Primary PostgreSQL cluster with 2 instances
 - `streaming-replica-secret.yaml` - Credentials for streaming replication
 - `service-export.yaml` - Exports PostgreSQL services via Submariner
 
-### Cluster2 (Replica Site)
+### Cluster-Two (Replica Site)
 - `replica-cluster.yaml` - Replica PostgreSQL cluster with 2 instances
 - `service-export.yaml` - Exports replica services (for failover scenarios)
 
 ## Deployment
 
-### Step 1: Deploy on Cluster1 (Primary)
+### Step 1: Deploy on Cluster-One (Primary)
 
 ```bash
-# Set kubeconfig to cluster1
-export KUBECONFIG=cluster1/auth/kubeconfig
+# Set kubeconfig to cluster-one
+export KUBECONFIG=cluster-one/auth/kubeconfig
 
 # Apply the manifests
-kubectl apply -k cnpg-cross-site/cluster1
+kubectl apply -k cnpg-cross-site/cluster-one
 
 # Wait for the operator to be ready
 kubectl wait --for=condition=available deployment/cloudnative-pg \
@@ -79,14 +79,14 @@ kubectl wait --for=condition=Ready cluster/cnpg-primary \
   -n cnpg-database --timeout=600s
 ```
 
-### Step 2: Deploy on Cluster2 (Replica)
+### Step 2: Deploy on Cluster-Two (Replica)
 
 ```bash
-# Set kubeconfig to cluster2
-export KUBECONFIG=cluster2/auth/kubeconfig
+# Set kubeconfig to cluster-two
+export KUBECONFIG=cluster-two/auth/kubeconfig
 
 # Apply the manifests
-kubectl apply -k cnpg-cross-site/cluster2
+kubectl apply -k cnpg-cross-site/cluster-two
 
 # Wait for the operator to be ready
 kubectl wait --for=condition=available deployment/cloudnative-pg \
@@ -105,33 +105,33 @@ kubectl wait --for=condition=Ready cluster/cnpg-replica \
 # On hub cluster, verify ServiceExport
 kubectl get serviceexport -n cnpg-database
 
-# Verify the service is imported on cluster2
-export KUBECONFIG=cluster2/auth/kubeconfig
+# Verify the service is imported on cluster-two
+export KUBECONFIG=cluster-two/auth/kubeconfig
 kubectl get serviceimport -n cnpg-database
 ```
 
 ### Verify Replication Status
 
 ```bash
-# On cluster1 - check primary status
-export KUBECONFIG=cluster1/auth/kubeconfig
+# On cluster-one - check primary status
+export KUBECONFIG=cluster-one/auth/kubeconfig
 kubectl get cluster cnpg-primary -n cnpg-database -o yaml | grep -A 10 status:
 
-# On cluster2 - check replica status
-export KUBECONFIG=cluster2/auth/kubeconfig
+# On cluster-two - check replica status
+export KUBECONFIG=cluster-two/auth/kubeconfig
 kubectl get cluster cnpg-replica -n cnpg-database -o yaml | grep -A 10 status:
 ```
 
 ### Test Data Replication
 
 ```bash
-# Connect to primary on cluster1
-export KUBECONFIG=cluster1/auth/kubeconfig
+# Connect to primary on cluster-one
+export KUBECONFIG=cluster-one/auth/kubeconfig
 kubectl exec -it cnpg-primary-1 -n cnpg-database -- psql -U postgres -d appdb -c "CREATE TABLE test_replication (id serial PRIMARY KEY, data text, created_at timestamp DEFAULT now());"
 kubectl exec -it cnpg-primary-1 -n cnpg-database -- psql -U postgres -d appdb -c "INSERT INTO test_replication (data) VALUES ('Hello from primary!');"
 
-# Verify data on replica (cluster2)
-export KUBECONFIG=cluster2/auth/kubeconfig
+# Verify data on replica (cluster-two)
+export KUBECONFIG=cluster-two/auth/kubeconfig
 kubectl exec -it cnpg-replica-1 -n cnpg-database -- psql -U postgres -d appdb -c "SELECT * FROM test_replication;"
 ```
 
@@ -140,8 +140,8 @@ kubectl exec -it cnpg-replica-1 -n cnpg-database -- psql -U postgres -d appdb -c
 To promote the replica cluster to primary:
 
 ```bash
-# On cluster2
-export KUBECONFIG=cluster2/auth/kubeconfig
+# On cluster-two
+export KUBECONFIG=cluster-two/auth/kubeconfig
 
 # Edit the replica cluster to disable replica mode
 kubectl patch cluster cnpg-replica -n cnpg-database --type=merge -p '{"spec":{"replica":{"enabled":false}}}'
@@ -165,17 +165,17 @@ kubectl logs -l app.kubernetes.io/name=cloudnative-pg -n openshift-operators -f
 ### Check PostgreSQL Pod Logs
 
 ```bash
-# Cluster1
+# Cluster-One
 kubectl logs cnpg-primary-1 -n cnpg-database
 
-# Cluster2
+# Cluster-Two
 kubectl logs cnpg-replica-1 -n cnpg-database
 ```
 
 ### Verify DNS Resolution via Submariner
 
 ```bash
-# On cluster2, verify the clusterset.local DNS resolves
+# On cluster-two, verify the clusterset.local DNS resolves
 kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup cnpg-primary-rw.cnpg-database.svc.clusterset.local
 ```
 

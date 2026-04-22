@@ -2,7 +2,7 @@ apiVersion: addon.open-cluster-management.io/v1alpha1
 kind: ManagedClusterAddOn
 metadata:
   name: submariner
-  namespace: cluster2
+  namespace: cluster-two
 spec:
   installNamespace: submariner-operator
 

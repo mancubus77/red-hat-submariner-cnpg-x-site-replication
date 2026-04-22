@@ -12,12 +12,12 @@
 # -----------
 #
 # 1. Deploy server on Cluster 1:
-#    export KUBECONFIG=/path/to/cluster1/kubeconfig
-#    kubectl apply -k apps/cluster1/
+#    export KUBECONFIG=/path/to/cluster-one/kubeconfig
+#    kubectl apply -k apps/cluster-one/
 #
 # 2. Deploy client on Cluster 2:
-#    export KUBECONFIG=/path/to/cluster2/kubeconfig
-#    kubectl apply -k apps/cluster2/
+#    export KUBECONFIG=/path/to/cluster-two/kubeconfig
+#    kubectl apply -k apps/cluster-two/
 #
 # Testing Connectivity:
 # --------------------
@@ -37,7 +37,7 @@
 #
 # Cleanup:
 # --------
-#    kubectl delete -k apps/cluster1/  # on Cluster 1
-#    kubectl delete -k apps/cluster2/  # on Cluster 2
+#    kubectl delete -k apps/cluster-one/  # on Cluster 1
+#    kubectl delete -k apps/cluster-two/  # on Cluster 2
 
 

@@ -21,7 +21,7 @@ make create
 source .env
 make submariner-deploy
 
-# Deploy CNPG primary (cluster1) and replica (cluster2)
+# Deploy CNPG primary (cluster-one) and replica (cluster-two)
 make cnpg-deploy
 ```
 

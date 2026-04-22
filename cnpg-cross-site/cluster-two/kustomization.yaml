@@ -14,7 +14,7 @@ labels:
       app.kubernetes.io/name: cnpg
       app.kubernetes.io/part-of: cnpg-cross-site
       app.kubernetes.io/component: replica
-      cluster: cluster2
+      cluster: cluster-two
     includeSelectors: false
 
 

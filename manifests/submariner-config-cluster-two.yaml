@@ -2,7 +2,7 @@ apiVersion: submarineraddon.open-cluster-management.io/v1alpha1
 kind: SubmarinerConfig
 metadata:
   name: submariner
-  namespace: cluster2
+  namespace: cluster-two
 spec:
   gatewayConfig:
     gateways: 1
@@ -12,4 +12,4 @@ spec:
   NATTEnable: true
   cableDriver: libreswan
   credentialsSecret:
-    name: cluster2-aws-creds
+    name: cluster-two-aws-creds

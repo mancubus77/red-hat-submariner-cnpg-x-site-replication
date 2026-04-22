@@ -33,7 +33,7 @@ spec:
                   echo "Hostname: $(hostname)"
                   echo "Date: $(date)"
                   echo "Pod IP: $(hostname -i)"
-                  echo "Cluster: cluster1"
+                  echo "Cluster: cluster-one"
                   echo "============================"
                 } | nc -l -p 8080 -q 1
               done
